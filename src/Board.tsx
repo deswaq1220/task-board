@@ -22,6 +22,7 @@ const TASKS_KEY = ["tasks"] as const;
 export default function Board() {
   const [isFormOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 순진한 초기 로드: 로딩만 처리합니다.
   const {
@@ -35,12 +36,20 @@ export default function Board() {
     retry: 2,
   });
 
+  console.log(tasks[0]);
+
   // ⚠️ 서버에 저장하지 않고 로컬 상태만 바꾸는 "순진한" 이동입니다.
 
   const moveMutation = useMoveTaskMutation();
   const createMutation = useCreateTaskMutation();
   const editMutation = useEditTaskMutation();
   const deleteMutation = useDeleteTaskMutation();
+
+  const filteredTasks = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return tasks;
+    return tasks.filter((t) => t.title.toLowerCase().includes(q));
+  }, [tasks, searchQuery]);
 
   const moveTask = (id: string, status: Status) => {
     const task = tasks.find((t) => t.id === id);
@@ -63,9 +72,9 @@ export default function Board() {
       "in-progress": [],
       done: [],
     };
-    for (const t of tasks) map[t.status].push(t);
+    for (const t of filteredTasks) map[t.status].push(t);
     return map;
-  }, [tasks]);
+  }, [filteredTasks]);
 
   if (isLoading) return <p className="hint">불러오는 중…</p>;
   if (isError)
@@ -75,32 +84,46 @@ export default function Board() {
         <button onClick={() => refetch()}>다시 시도</button>
       </div>
     );
-  if (tasks.length === 0) return <p className="hint">태스크가 없습니다.</p>;
 
   return (
     <div className="app">
-      <button
-        onClick={() => {
-          setEditingTask(null);
-          setFormOpen(true);
-        }}
-      >
-        + 태스크 추가
-      </button>
-
-      <div className="board">
-        {COLUMNS.map((col) => (
-          <Column
-            key={col.status}
-            title={col.title}
-            status={col.status}
-            tasks={byStatus[col.status]}
-            onMove={moveTask}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        ))}
+      <div className="toolbar">
+        <button
+          onClick={() => {
+            setEditingTask(null);
+            setFormOpen(true);
+          }}
+        >
+          + 태스크 추가
+        </button>
+        <input
+          type="text"
+          placeholder="제목으로 검색..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-input"
+        />
       </div>
+
+      {tasks.length === 0 ? (
+        <p className="hint">태스크가 없습니다.</p>
+      ) : filteredTasks.length === 0 ? (
+        <p className="hint">검색 결과가 없습니다.</p>
+      ) : (
+        <div className="board">
+          {COLUMNS.map((col) => (
+            <Column
+              key={col.status}
+              title={col.title}
+              status={col.status}
+              tasks={byStatus[col.status]}
+              onMove={moveTask}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+      )}
 
       {isFormOpen && (
         <TaskForm
