@@ -10,6 +10,7 @@ import {
   useEditTaskMutation,
   useMoveTaskMutation,
 } from "./hooks/useTaskMutations";
+import { filterByTitle } from "./lib/tasks";
 
 const COLUMNS: { status: Status; title: string }[] = [
   { status: "todo", title: "To Do" },
@@ -36,8 +37,6 @@ export default function Board() {
     retry: 2,
   });
 
-  console.log(tasks[0]);
-
   // ⚠️ 서버에 저장하지 않고 로컬 상태만 바꾸는 "순진한" 이동입니다.
 
   const moveMutation = useMoveTaskMutation();
@@ -45,11 +44,10 @@ export default function Board() {
   const editMutation = useEditTaskMutation();
   const deleteMutation = useDeleteTaskMutation();
 
-  const filteredTasks = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return tasks;
-    return tasks.filter((t) => t.title.toLowerCase().includes(q));
-  }, [tasks, searchQuery]);
+  const filteredTasks = useMemo(
+    () => filterByTitle(tasks, searchQuery),
+    [tasks, searchQuery]
+  );
 
   const moveTask = (id: string, status: Status) => {
     const task = tasks.find((t) => t.id === id);

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateTask, createTask, deleteTask, ApiError } from "../api/client";
 import type { Task, Status, Priority } from "../types";
+import { moveTask } from "../lib/tasks";
 
 export const TASKS_KEY = ["tasks"] as const;
 
@@ -23,7 +24,7 @@ export function useMoveTaskMutation() {
       await queryClient.cancelQueries({ queryKey: TASKS_KEY });
       const previousTasks = queryClient.getQueryData<Task[]>(TASKS_KEY);
       queryClient.setQueryData<Task[]>(TASKS_KEY, (old) =>
-        old?.map((t) => (t.id === id ? { ...t, status } : t))
+        old ? moveTask(old, id, status) : old
       );
       return { previousTasks };
     },
