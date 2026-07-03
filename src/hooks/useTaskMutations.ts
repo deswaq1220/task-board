@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateTask, createTask, deleteTask, ApiError } from "../api/client";
 import type { Task, Status, Priority } from "../types";
-import { moveTask } from "../lib/tasks";
+import { mergeServerTask, moveTask } from "../lib/tasks";
 
 export const TASKS_KEY = ["tasks"] as const;
 
@@ -37,7 +37,7 @@ export function useMoveTaskMutation() {
         const serverTask = (err.payload as { current?: Task })?.current;
         if (serverTask) {
           queryClient.setQueryData<Task[]>(TASKS_KEY, (old) =>
-            old?.map((t) => (t.id === serverTask.id ? serverTask : t))
+            old ? mergeServerTask(old, serverTask) : old
           );
         }
         alert("다른 곳에서 먼저 변경되었습니다. 최신 상태로 갱신했습니다.");
