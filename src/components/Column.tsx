@@ -6,20 +6,40 @@ interface Props {
   status: Status;
   tasks: Task[];
   onMove: (id: string, status: Status) => void;
+  onEdit: (task: Task) => void;
+  onDelete: (id: string) => void;
 }
 
-const ROW_HEIGHT = 74; // Card 실제 높이 재서 맞추기 (아래 설명 참고)
+const ROW_HEIGHT = 100; // Card 실제 높이 재서 맞추기 (아래 설명 참고)
 const LIST_HEIGHT = 600; // column-body가 화면에서 실제로 차지하는 높이
 
-function Row({ index, style, tasks }: RowComponentProps<{ tasks: Task[] }>) {
+function Row({
+  index,
+  style,
+  tasks,
+  onEdit,
+  onDelete,
+}: RowComponentProps<{
+  tasks: Task[];
+  onEdit: (task: Task) => void;
+  onDelete: (id: string) => void;
+}>) {
+  const task = tasks[index];
   return (
     <div style={{ ...style, paddingBottom: 8 }}>
-      <Card task={tasks[index]} />
+      <Card task={task} onEdit={onEdit} onDelete={onDelete} />
     </div>
   );
 }
 
-export function Column({ title, status, tasks, onMove }: Props) {
+export function Column({
+  title,
+  status,
+  tasks,
+  onMove,
+  onEdit,
+  onDelete,
+}: Props) {
   return (
     <section
       className="column"
@@ -38,7 +58,7 @@ export function Column({ title, status, tasks, onMove }: Props) {
           rowCount={tasks.length}
           rowHeight={ROW_HEIGHT}
           rowComponent={Row}
-          rowProps={{ tasks }}
+          rowProps={{ tasks, onEdit, onDelete }}
           style={{ height: LIST_HEIGHT }}
         />
       </div>
